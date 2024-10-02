@@ -1,0 +1,1 @@
+# plugins-shutter-reloaded
