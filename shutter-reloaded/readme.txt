@@ -3,12 +3,14 @@ Contributors: Andrew Ozz
 Tags: images, javascript, viewer, lightbox
 Requires at least: 3.0
 Tested up to: 3.4
-Stable tag: 2.5
+Stable tag: 2.6
 
-Darkens the current page and displays an image (like Lightbox, Thickbox, etc.), but is a lot smaller (10KB) and faster.
+This plugin is incompatible with newer versions of WordPress. Last supported version is 3.4. It darkens the current page and displays an image (like Lightbox, Thickbox, etc.).
 
 
 == Description ==
+
+This plugin is incompatible with newer versions of WordPress. Last officially supported version is WordPress 3.4.
 
 Shutter Reloaded is an image viewer for your website that works similarly to Lightbox, Thickbox, etc. but is under 10KB in size and does not require any external libraries. It has many features: resizing large images if the window is too small to display them with option to show the full size image, combining images in sets, redrawing the window after resizing, pre-loading of neighbour images for faster display and very good browser compatibility.
 
@@ -19,6 +21,9 @@ There are options to enable it for all links pointing to an image on your site (
 The plugin can also "auto-make" image sets for each Post, so when several posts are displayed on the "Home" page, links to images on each post will be in a separate set. See the built-in help for more information.
 
 == Changelog ==
+
+= 2.6 =
+Some bug and security fixes.
 
 = 2.5 =
 Refreshed to use the updated WordPress API, fix for minor inconsistency in WebKit.
@@ -53,7 +58,7 @@ Update to the French translation courtesy of Lise, http://liseweb.fr
 
 = 1.2 =
  * Compatibility with WordPress version 2.0 (2.0.11) and 2.3.
- * Several improvements and small bugfixes. 
+ * Several improvements and small bugfixes.
 
 = 1.1 =
  * Support for Lightbox style activation (rel = lightbox[...]).
@@ -62,9 +67,9 @@ Update to the French translation courtesy of Lise, http://liseweb.fr
 == Installation ==
 
 Standard WordPress quick and easy installation:
- 
+
 1. Download.
-2. Unzip. 
+2. Unzip.
 3. Upload the shutter-reloaded folder to the plugins directory.
 4. Activate the plugin.
 5. Go to "Appearance - Shutter Reloaded" and set your preferences.
@@ -75,7 +80,7 @@ Standard WordPress quick and easy installation:
 2. Upload and activate the new one.
 
 
-== Frequently Asked Questions == 
+== Frequently Asked Questions ==
 
 = I have ... plugin installed that uses javascript, will there be any conflicts/incompatibilities? =
 
@@ -92,4 +97,4 @@ No, Shutter Reloaded looks only for links pointing to an image (with thumbnails 
 
 == Screenshots ==
 
-For demo and screenshots visit the home page for [Shutter Reloaded](http://www.laptoptips.ca/projects/wp-shutter-reloaded/). 
+For demo and screenshots visit the home page for [Shutter Reloaded](http://www.laptoptips.ca/projects/wp-shutter-reloaded/).

@@ -4,132 +4,190 @@
 if ( !defined('SREL_SETTINGS') )
 	exit;
 
-if ( ! current_user_can('manage_options') )
-		die( __('Permission denied', 'srel_l10n') );
+if ( ! current_user_can('manage_options') ) {
+	die('Invalid request');
+}
 
-	$opt = get_option('srel_main');
-	if ( !$opt )
-		$opt = 'srel_all';
-
-	srel_txtdomain();
-
-	$srel_options = get_option('srel_options', array());
-	$def = array( 'shcolor' => '000000', 'opacity' => '80', 'capcolor' => 'ffffff', 'menucolor' => '3e3e3e', 'btncolor' => 'cccccc', 'countcolor' => '999999', 'headload' => 0, 'oneset' => 1, 'imageCount' => 1, 'textBtns' => 0, 'custom' => 0 );
-
-	if ( empty($srel_options) ) {
-		$srel_options = $def;
-		update_option('srel_options', $srel_options);
+// Checks and returns the hex color code for the $field_name. Returns the $default_value if it is invalid.
+function srel_validate_hex_color( $field_name, $default_value ) {
+	if ( empty( $field_name ) || empty( $_POST[ $field_name ] ) || ! is_string( $_POST[ $field_name ] ) ) {
+		return $default_value;
 	}
 
-	if ( isset($_POST['srel_main']) ) {
-		check_admin_referer('srel-save-options');
-		$newopt = $_POST['srel_all'] ? 'srel_all' : '';
-		$newopt = $_POST['srel_class'] ? 'srel_class' : $newopt;
-		$newopt = $_POST['auto_set'] ? 'auto_set' : $newopt;
-		$newopt = $_POST['srel_pages'] ? 'srel_pages' : $newopt;
-		$newopt = $_POST['srel_lb'] ? 'srel_lb' : $newopt;
+	if ( preg_match( "/^[0-9A-Fa-f]{6}$/", $_POST[ $field_name ] ) ) {
+		return strtolower( $_POST[ $field_name ] );
+	} else {
+		return $default_value;
+	}
+}
 
-		if ( $newopt != $opt ) {
-			$opt = $newopt;
-			update_option('srel_main', $newopt);
+$opt = get_option('srel_main');
+if ( !$opt )
+	$opt = 'srel_all';
+
+srel_txtdomain();
+
+$srel_options = get_option('srel_options', array());
+$def = array( 'shcolor' => '000000', 'opacity' => '80', 'capcolor' => 'ffffff', 'menucolor' => '3e3e3e', 'btncolor' => 'cccccc', 'countcolor' => '999999', 'headload' => 0, 'oneset' => 1, 'imageCount' => 1, 'textBtns' => 0, 'custom' => 0 );
+
+if ( empty($srel_options) ) {
+	$srel_options = $def;
+	update_option('srel_options', $srel_options);
+}
+
+if ( isset($_POST['srel_main']) ) {
+	check_admin_referer('srel-save-options');
+
+	if ( isset( $_POST['srel_all'] ) ) {
+		$newopt = 'srel_all';
+	} elseif ( isset( $_POST['srel_class'] ) ) {
+		$newopt = 'srel_class';
+	} elseif ( isset( $_POST['auto_set'] ) ) {
+		$newopt = 'auto_set';
+	} elseif ( isset( $_POST['srel_pages'] ) ) {
+		$newopt = 'srel_pages';
+	} elseif ( isset( $_POST['srel_lb'] ) ) {
+		$newopt = 'srel_lb';
+	} else {
+		$newopt = '';
+	}
+
+	if ( $newopt && $newopt != $opt ) {
+		$opt = $newopt;
+		update_option('srel_main', $newopt);
+	}
+}
+
+if ( isset($_POST['srel_saveopt']) ) {
+	check_admin_referer('srel-save-options');
+	$new_opt = array();
+
+	$new_opt['shcolor'] = srel_validate_hex_color( 'shcolor', '000000' );
+	$new_opt['capcolor'] = srel_validate_hex_color( 'capcolor', 'ffffff' );
+	$new_opt['menucolor'] = srel_validate_hex_color( 'menucolor', '3e3e3e' );
+	$new_opt['btncolor'] = srel_validate_hex_color( 'btncolor', 'cccccc' );
+	$new_opt['countcolor'] = srel_validate_hex_color( 'countcolor', '999999' );
+	$new_opt['imageCount'] = isset( $_POST['imageCount'] ) ? 1 : 0;
+	$new_opt['textBtns'] = isset( $_POST['textBtns'] ) ? 1 : 0;
+	$new_opt['opacity'] = -1 < (int) $_POST['opacity'] && (int) $_POST['opacity'] < 101 ? (int) $_POST['opacity'] : '80';
+	$new_opt['headload'] = isset( $_POST['headload'] ) ? 1 : 0;
+	$new_opt['startFull'] = isset( $_POST['startFull'] ) ? 1 : 0;
+	$new_opt['oneset'] = isset( $_POST['oneset'] ) ? 1 : 0;
+
+	$new_opt['custom'] = ( $new_opt['shcolor'] != '000000' ||
+		$new_opt['capcolor'] != 'ffffff' ||
+		$new_opt['menucolor'] != '3e3e3e' ||
+		$new_opt['btncolor'] != 'cccccc' ||
+		$new_opt['countcolor'] != '999999' ||
+		$new_opt['opacity'] != '80' ) ? 1 : 0;
+
+	if ( $new_opt != $srel_options ) {
+		$srel_options = $new_opt;
+		update_option('srel_options', $new_opt);
+	}
+}
+
+$excluded = get_option( 'srel_excluded', array() );
+$included = get_option( 'srel_included', array() );
+
+if ( isset($_POST['srel_add_excluded']) ) {
+	check_admin_referer('srel-save-options');
+	$exclude = (int) $_POST['srel_exclude'];
+
+	if ( $exclude < 1 )
+		wp_die( __('Please enter valid post ID.', 'srel-l10n') );
+
+	$excluded[] = $exclude;
+	$excluded = array_values(array_unique($excluded));
+	sort($excluded);
+
+	update_option('srel_excluded', $excluded);
+}
+
+if ( isset( $_POST['srel_rem_excluded'] ) ) {
+	check_admin_referer('srel-save-options');
+	$rem_exclude = (int) $_POST['srel_exclude'];
+
+	if ( ! in_array( $rem_exclude, $excluded, true) ) {
+		?>
+		<div class="error"><p><?php _e('This post ID is not currently excluded.', 'srel-l10n'); ?></p></div>
+		<?php
+	} else {
+		$excluded = array_diff( $excluded, (array) $rem_exclude );
+
+		if ( is_array($excluded) ) {
+			sort( $excluded );
+		} else {
+			$excluded = array();
 		}
-	}
-
-	if ( isset($_POST['srel_saveopt']) ) {
-		check_admin_referer('srel-save-options');
-		$new_opt['shcolor'] = preg_match("/[0-9A-Fa-f]{6}/", $_POST['shcolor']) ? strtolower($_POST['shcolor']) : '000000';
-		$new_opt['capcolor'] = preg_match("/[0-9A-Fa-f]{6}/", $_POST['capcolor']) ? strtolower($_POST['capcolor']) : 'ffffff';
-		$new_opt['menucolor'] = preg_match("/[0-9A-Fa-f]{6}/", $_POST['menucolor']) ? strtolower($_POST['menucolor']) : '3e3e3e';
-		$new_opt['btncolor'] = preg_match("/[0-9A-Fa-f]{6}/", $_POST['btncolor']) ? strtolower($_POST['btncolor']) : 'cccccc';
-		$new_opt['countcolor'] = preg_match("/[0-9A-Fa-f]{6}/", $_POST['countcolor']) ? strtolower($_POST['countcolor']) : '999999';
-		$new_opt['imageCount'] = isset($_POST['imageCount']) ? 1 : 0;
-		$new_opt['textBtns'] = isset($_POST['textBtns']) ? 1 : 0;
-		$new_opt['opacity'] = -1 < (int) $_POST['opacity'] && (int) $_POST['opacity'] < 101 ? (int) $_POST['opacity'] : '80';
-		$new_opt['headload'] = isset($_POST['headload']) ? 1 : 0;
-		$new_opt['startFull'] = isset($_POST['startFull']) ? 1 : 0;
-		$new_opt['oneset'] = isset($_POST['oneset']) ? 1 : 0;
-
-		$new_opt['custom'] = ( $new_opt['shcolor'] != '000000' ||
-			$new_opt['capcolor'] != 'ffffff' ||
-			$new_opt['menucolor'] != '3e3e3e' ||
-			$new_opt['btncolor'] != 'cccccc' ||
-			$new_opt['countcolor'] != '999999' ||
-			$new_opt['opacity'] != '80' ) ? 1 : 0;
-
-		if ( $new_opt != $srel_options ) {
-			$srel_options = $new_opt;
-			update_option('srel_options', $new_opt);
-		}
-	}
-
-	$excluded = get_option('srel_excluded', array());
-	$included = get_option('srel_included', array());
-
-	if ( isset($_POST['srel_add_excluded']) ) {
-		check_admin_referer('srel-save-options');
-		$exclude = (int) $_POST['srel_exclude'];
-		if ( $exclude < 1 )
-			wp_die(__('Please enter valid post ID.', 'srel-l10n'));
-
-		$excluded[] = $exclude;
-		$excluded = array_values(array_unique($excluded));
-		sort($excluded);
 
 		update_option('srel_excluded', $excluded);
 	}
+}
 
-	if ( isset($_POST['srel_rem_excluded']) ) {
-		check_admin_referer('srel-save-options');
-		$rem_exclude = (int) $_POST['srel_exclude'];
-		if ( ! in_array($rem_exclude, $excluded) ) { ?>
-			<div class="error"><p><?php _e('This post ID is not currently excluded.', 'srel-l10n'); ?></p></div>
-<?php	} else {
-			$excluded = array_diff($excluded, (array) $rem_exclude );
-			if ( is_array($excluded) ) sort($excluded);
-			else $excluded = array();
-			update_option('srel_excluded', $excluded);
+if ( isset( $_POST['srel_add_included'] ) ) {
+	check_admin_referer('srel-save-options');
+	$include = (int) $_POST['srel_include'];
+
+	if ( $include < 1 )
+		wp_die(__('Please enter valid post ID.', 'srel-l10n'));
+
+	$included[] = $include;
+	$included = array_values( array_unique( $included ) );
+	sort( $included );
+
+	update_option('srel_included', $included);
+}
+
+if ( isset( $_POST['srel_rem_included'] ) ) {
+	check_admin_referer('srel-save-options');
+	$rem_include = (int) $_POST['srel_include'];
+
+	if ( ! in_array( $rem_include, $included, true ) ) {
+		?>
+		<div class="error"><p><?php _e('This post ID is not currently included.', 'srel-l10n'); ?></p></div>
+		<?php
+	} else {
+		$included = array_diff($included, (array) $rem_include);
+
+		if ( is_array( $included ) ) {
+			sort( $included );
+		} else {
+			$included = array();
 		}
-	}
-
-	if ( isset($_POST['srel_add_included']) ) {
-		check_admin_referer('srel-save-options');
-		$include = (int) $_POST['srel_include'];
-		if ( $include < 1 )
-			wp_die(__('Please enter valid post ID.', 'srel-l10n'));
-
-		$included[] = $include;
-		$included = array_values(array_unique($included));
-		sort($included);
-
 		update_option('srel_included', $included);
 	}
+}
 
-	if ( isset($_POST['srel_rem_included']) ) {
-		check_admin_referer('srel-save-options');
-		$rem_include = (int) $_POST['srel_include'];
-		if ( ! in_array($rem_include, $included) ) { ?>
-			<div class="error"><p><?php _e('This post ID is not currently included.', 'srel-l10n'); ?></p></div>
-<?php   } else {
-			$included = array_diff($included, (array) $rem_include);
-			if ( is_array($included) ) sort($included);
-			else $included = array();
-			update_option('srel_included', $included);
-		}
-	}
+if ( isset( $_POST['srel_delete_options'] ) ) {
+	check_admin_referer('srel-save-options');
 
-	if ( isset($_POST['srel_delete_options']) ) {
-		check_admin_referer('srel-save-options');
-		delete_option('srel_options');
-		delete_option('srel_main');
-		delete_option('srel_included');
-		delete_option('srel_excluded'); ?>
-		<div id="message" class="updated fade"><p><?php _e('All options reset! You can either ', 'srel-l10n'); ?><a href="<?php echo admin_url('plugins.php'); ?>"><?php _e( 'deactivate Shutter Reloaded,', 'srel-l10n' ); ?></a> <a href=""><?php _e( 'or return to the settings page.', 'srel-l10n' ); ?></a></p></div><?php 
-		return;
-	} elseif ( isset($_POST['srel_saveopt']) ) { ?>
+	// current_user_can( 'manage_options' ) is checked at the top
+
+	delete_option('srel_options');
+	delete_option('srel_main');
+	delete_option('srel_included');
+	delete_option('srel_excluded');
+	?>
+	<div id="message" class="updated fade">
+	<p><?php _e('All options reset! You can either ', 'srel-l10n'); ?>
+		<a href="<?php echo admin_url('plugins.php'); ?>"><?php _e( 'deactivate Shutter Reloaded,', 'srel-l10n' ); ?></a>
+		<a href=""><?php _e( 'or return to the settings page.', 'srel-l10n' ); ?></a>
+	</p>
+	</div>
+	<?php
+
+	return;
+} elseif ( isset( $_POST['srel_saveopt'] ) ) {
+	?>
 	<div id="message" class="updated fade"><p><?php _e('Options saved!', 'srel-l10n'); ?></p></div>
-<?php } ?>
+	<?php
+}
 
-	<div class="wrap">
+// Options page HTML start
+?>
+
+<div class="wrap">
 	<h2><?php _e('Shutter Reloaded Options', 'srel-l10n'); ?></h2>
 	<form method="post" name="srel_mainform" id="srel_mainform" action="">
 
@@ -189,6 +247,7 @@ value="<?php echo js_escape(__("Show Help", "srel-l10n")); ?>" /></p>
 
 	<div style="padding:0 12px 4px;border: 1px solid #dfdfdf;">
 <?php
+
 if ( $opt == 'srel_all' || $opt == 'auto_set' ) { ?>
 
 	<form method="post" name="srel_excluded" id="srel_excluded" action="">
@@ -272,9 +331,9 @@ if ( $opt == 'srel_pages' ) { ?>
 <?php
 	}
 ?>
-	</div>
+</div>
 
-	<form method="post" name="srel_saveoptform" id="srel_saveoptform" action="">
+<form method="post" name="srel_saveoptform" id="srel_saveoptform" action="">
 	<table class="widefat" style="padding:5px 12px;border:0;margin-top:20px;">
 	<thead>
 	<tr><th colspan="2" style="text-align:center;">
@@ -288,7 +347,7 @@ if ( $opt == 'srel_pages' ) { ?>
 	</td><td style="vertical-align:middle;">
 	<input type="checkbox" class="checkbox"  name="oneset" id="oneset" <?php if ($srel_options['oneset'] == 1) { echo ' checked="checked"'; } ?> />
 	</td></tr>
-	
+
 	<tr><td style="width:50%;text-align:right;vertical-align:middle;">
 	<label for="shcolor"><?php _e('Shutter color (default 000000):', 'srel-l10n'); ?> <br /><?php _e('Please enter valid HTML color codes, from 000000 to FFFFFF.', 'srel-l10n'); ?></label>
 	</td><td style="vertical-align:middle;">
@@ -346,7 +405,7 @@ if ( $opt == 'srel_pages' ) { ?>
 	<tr><td style="text-align:right;vertical-align:middle;">
 	<label for="startFull"><?php _e('Open the images in full size:', 'srel-l10n'); ?></label>
 	</td><td style="vertical-align:middle;">
-	<input type="checkbox" class="checkbox"  name="startFull" id="startFull" <?php if ($srel_options['startFull'] == 1) { echo ' checked="checked"'; } ?> />
+	<input type="checkbox" class="checkbox"  name="startFull" id="startFull" <?php if ( ! empty( $srel_options['startFull'] ) ) { echo ' checked="checked"'; } ?> />
 	</td></tr>
 
 	<tr><td style="text-align:right;vertical-align:middle;">
@@ -363,6 +422,7 @@ if ( $opt == 'srel_pages' ) { ?>
 	<input class="button-primary" type="submit" name="srel_saveopt" value="<?php _e('Save Options', 'srel-l10n'); ?>" />
 	</p>
 	<?php wp_nonce_field( 'srel-save-options' ); ?>
-	</form>
-	</div><?php //wrap ?>
-
+</form>
+</div>
+<?php
+// wrap end
